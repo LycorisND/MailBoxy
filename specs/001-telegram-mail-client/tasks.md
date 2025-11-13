@@ -36,6 +36,11 @@ description: "Task list for Telegram Mail Client feature"
 - [ ] T049 [P] Implement per-account message persistence flag and retention fields in DB model (add `persist_messages` and `retention_days` to `MailboxAccount`) — file: `backend/src/models/mailbox_account.py`
 - [ ] T050 [P] Implement retention enforcement job to delete expired persisted message bodies (scheduled worker) — file: `backend/src/workers/retention.py`
 
+- [ ] T051 [P] Integrate KMS / secret manager for token encryption keys and key rotation; update `backend/src/lib/encryption.py` to fetch keys from KMS (AWS KMS / GCP KMS / Vault) — file: `backend/src/lib/encryption.py`
+- [ ] T052 [P] Provision domain and TLS certs for `mailboxy.app` (staging and prod), and register OAuth redirect URIs with provider configs; add staging alternative (ngrok/host tunneling) for local dev — files: `deploy/`, `infra/`, provider dashboards
+- [ ] T053 [P] Add CI secret-scanning and a pre-merge check to fail if plaintext secrets or private keys are present; add policy to `.github/workflows/ci.yml` — file: `.github/workflows/ci.yml`
+- [ ] T054 [P] Add onboarding docs and automation for redirect URIs and OAuth client registration to allow reproducible provider test accounts — file: `docs/oauth_setup.md`
+
 ## Phase 3: User Story 1 - Connect / Remove Mailboxes (Priority: P1) 🎯 MVP
 
 **Goal**: Allow users to connect and remove mailbox accounts via OAuth.

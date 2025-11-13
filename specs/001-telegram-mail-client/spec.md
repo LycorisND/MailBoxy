@@ -151,38 +151,37 @@ to mitigate impersonation and session risks.
 
 ### Functional Requirements
 
-- **FR-001**: System MUST [specific capability, e.g., "allow users to create accounts"]
-- **FR-002**: System MUST [specific capability, e.g., "validate email addresses"]  
-- **FR-003**: Users MUST be able to [key interaction, e.g., "reset their password"]
-- **FR-004**: System MUST [data requirement, e.g., "persist user preferences"]
-- **FR-005**: System MUST [behavior, e.g., "log all security events"]
+- **FR-OAUTH-001**: OAuth-first integration: The system MUST integrate
+  mailbox providers (Gmail, Outlook, Yandex, etc.) via OAuth or equivalent
+  secure delegation flows. Tokens MUST be stored encrypted at rest and
+  never committed to repository code. Mailbox linking and management actions
+  (add/remove accounts, token refresh/revocation) MUST use explicit OAuth
+  flows; the web-app MAY accept a Telegram-derived session for convenience
+  but sensitive operations MUST require re-authentication or re-authorization.
 
-<!-- Constitution-mandated functional requirements examples -->
-- **FR-AUTH-001**: System MUST integrate mailbox providers via OAuth or
-  equivalent secure delegation flows; credentials MUST NOT be stored.
-- **FR-NOTIFY-001**: Notification delivery MUST implement OTP-first policy:
-  OTP-containing messages MUST trigger high-priority alerts; other mail
-  notifications MUST be silent by default.
-- **FR-DOMAIN-001**: Web UI and OAuth redirect URIs MUST use the official
-  domain `mailboxy.app` unless an explicit exception is approved.
+- **FR-NOTIFY-001**: Notification policy: Notification delivery MUST
+  implement the OTP-first policy: OTP-containing messages MUST trigger
+  high-priority alerts; non-OTP messages MUST be delivered silently by
+  default. Notifications MUST be sent to the user's private Telegram chat
+  by default; group/channel delivery is out-of-scope for MVP and requires
+  explicit opt-in.
 
-- **FR-AUTH-002**: Mailbox linking MUST require provider OAuth flows. While
-  Telegram identity may be used to create a lightweight session for opening
-  the web-app, any mailbox-management or sensitive operations MUST require
-  OAuth re-authentication or explicit authorization confirmation.
+- **FR-OTP-001**: OTP formatting and delivery: For OTP-containing emails,
+  Telegram notifications MUST include the full OTP formatted as hidden/
+  spoiler text when supported by the client. If spoilers are unsupported,
+  notifications MUST fall back to a masked OTP (last 4 characters) and
+  provide instructions to retrieve the full code via the web-app.
 
-- **FR-NOTIFY-DEST-001**: Notifications MUST be delivered to the user's
-  private Telegram chat by default. Support for delivering notifications to
-  group chats or channels is out-of-scope for the initial MVP and requires
-  an explicit opt-in mechanism and documented consent flow.
+- **FR-RET-001**: Message persistence & retention: Full message bodies MAY
+  be persisted only when the user opts in per-account (`persist_messages`).
+  By default only snippets and metadata are stored. Persisted bodies MUST
+  have a configurable retention period (default: 30 days) enforced by
+  automated cleanup jobs.
 
-- **FR-OTP-002**: For OTP-containing emails, the Telegram notification MUST
-  include the full OTP formatted as hidden/spoiler text (Telegram spoiler
-  markup) in the high-priority notification. If the recipient client or
-  channel does not support spoiler formatting, the notification MUST fall
-  back to a masked form (last 4 characters) and instruct the user how to
-  retrieve the full code via the web-app. The system MUST document this
-  behavior and provide configuration for per-account preferences if needed.
+- **FR-DOMAIN-001**: Domain and redirect URIs: Web UI and OAuth redirect
+  URIs MUST use the official domain `mailboxy.app` in production. The plan
+  MUST include tasks to provision DNS and TLS and register redirect URIs
+  with each provider.
 
 - **FR-RET-001**: Message persistence MUST be opt-in per-account. By
   default the system stores only message snippets and metadata; if a user
@@ -216,7 +215,13 @@ to mitigate impersonation and session risks.
 
 ### Measurable Outcomes
 
-- **SC-001**: [Measurable metric, e.g., "Users can complete account creation in under 2 minutes"]
-- **SC-002**: [Measurable metric, e.g., "System handles 1000 concurrent users without degradation"]
-- **SC-003**: [User satisfaction metric, e.g., "90% of users successfully complete primary task on first attempt"]
-- **SC-004**: [Business metric, e.g., "Reduce support tickets related to [X] by 50%"]
+- **SC-001**: OAuth connect flow: A user can complete mailbox linking via
+  OAuth within 3 minutes in 95% of successful attempts (measured in tests).
+- **SC-002**: Notification latency: Telegram notifications for OTP emails
+  are delivered within 30 seconds in 95% of test deliveries under normal
+  operating conditions.
+- **SC-003**: OTP detection accuracy: OTP detection heuristics achieve >=95%
+  precision on a representative test corpus (minimize false positives).
+- **SC-004**: Aggregation correctness: The aggregated mail list shows
+  messages from multiple accounts merged and correctly ordered by received
+  time in 99% of test cases.
