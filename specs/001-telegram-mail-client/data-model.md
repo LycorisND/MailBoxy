@@ -27,6 +27,7 @@
 - created_at, updated_at
 - persist_messages: boolean (default: false)  # per-account opt-in for full body storage
 - retention_days: integer (nullable, default: 30)  # retention period for persisted bodies
+- encryption_key_id: string (nullable)  # optional reference to KMS key/version used to encrypt this account's tokens
 
 ### Message
 - id: uuid
