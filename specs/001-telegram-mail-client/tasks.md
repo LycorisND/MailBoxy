@@ -33,6 +33,9 @@ description: "Task list for Telegram Mail Client feature"
 - [ ] T017 Add structured logging and basic metrics scaffolding (prometheus client hooks) — file: `backend/src/lib/observability.py`
 - [ ] T018 Add basic end-to-end test harness setup (pytest + test DB config) — file: `tests/e2e/conftest.py`
 
+- [ ] T049 [P] Implement per-account message persistence flag and retention fields in DB model (add `persist_messages` and `retention_days` to `MailboxAccount`) — file: `backend/src/models/mailbox_account.py`
+- [ ] T050 [P] Implement retention enforcement job to delete expired persisted message bodies (scheduled worker) — file: `backend/src/workers/retention.py`
+
 ## Phase 3: User Story 1 - Connect / Remove Mailboxes (Priority: P1) 🎯 MVP
 
 **Goal**: Allow users to connect and remove mailbox accounts via OAuth.

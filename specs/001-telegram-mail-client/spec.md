@@ -11,6 +11,15 @@ User Stories provided:
 - Как пользователь, я хочу видеть всю почту со всех подключенных ящиков в списке почты.
 - Как пользователь, я хочу получать уведомления когда поступают новые письма (телеграм бот отправляет сообщение в чат). Если почта содержит одноразовый код для авторизации, то бот отправляет сообщение, в остальных случаях сообщения отправляются без звука.
 
+## Clarifications
+
+### Session 2025-11-14
+
+- Q: Authentication / account linking between Telegram and MailBoxy → A: Require explicit linking via OAuth; web-app may reuse Telegram session for convenience but MUST require OAuth re-authentication or re-authorization for sensitive actions.
+- Q: Notification delivery destination → A: Deliver notifications to the user's private Telegram chat only by default; no group/channel delivery unless explicitly requested in a future opt-in flow.
+ - Q: OTP content in notifications → A: Include the full OTP in high-priority Telegram notifications but formatted as hidden/spoiler text (Telegram spoiler markup). If the recipient client does not support spoiler formatting, fall back to showing a masked OTP (last 4 characters).
+ - Q: Message body retention policy → A: Persist full message bodies only if the user opts in per-account; by default only snippets are stored. Default retention for persisted bodies: 30 days (user-configurable per-account).
+
 ## User Scenarios & Testing *(mandatory)*
 
 <!--
@@ -65,10 +74,18 @@ sanitization rules.
 Acceptance Scenarios:
 1. **Given** a new incoming email containing an OTP, **When** MailBoxy
    processes it, **Then** the Telegram bot sends an audible/high-priority
-   notification with minimal identifying info and the OTP.
+  notification with minimal identifying info and the full OTP formatted as
+  hidden/spoiler text using Telegram's supported markup. If the Telegram
+  client does not render spoilers, fall back to displaying a masked OTP
+  (last 4 characters) and prompt the user to open the web-app for the full
+  code.
 2. **Given** a new incoming email without OTP, **When** MailBoxy processes
    it, **Then** the Telegram bot sends a silent notification containing
    sender and subject only.
+
+Additional constraint: Notifications are delivered to the user's private
+Telegram chat by default. Group or channel delivery is NOT supported in the
+initial MVP and requires an explicit opt-in flow and additional consent.
 
 ---
 
@@ -107,6 +124,12 @@ Acceptance Scenarios:
    Telegram, **Then** the `mailboxy.app` web UI opens inside Telegram web-app
    and shows their aggregated mail.
 
+Additional constraint: the web-app MAY accept a Telegram-derived session to
+provide a convenient single-click entry, BUT sensitive actions (adding/removing
+mailboxes, viewing full message bodies beyond snippets, changing notification
+preferences) MUST require explicit OAuth re-authentication or re-confirmation
+to mitigate impersonation and session risks.
+
 ---
 
 ### Edge Cases
@@ -143,6 +166,30 @@ Acceptance Scenarios:
 - **FR-DOMAIN-001**: Web UI and OAuth redirect URIs MUST use the official
   domain `mailboxy.app` unless an explicit exception is approved.
 
+- **FR-AUTH-002**: Mailbox linking MUST require provider OAuth flows. While
+  Telegram identity may be used to create a lightweight session for opening
+  the web-app, any mailbox-management or sensitive operations MUST require
+  OAuth re-authentication or explicit authorization confirmation.
+
+- **FR-NOTIFY-DEST-001**: Notifications MUST be delivered to the user's
+  private Telegram chat by default. Support for delivering notifications to
+  group chats or channels is out-of-scope for the initial MVP and requires
+  an explicit opt-in mechanism and documented consent flow.
+
+- **FR-OTP-002**: For OTP-containing emails, the Telegram notification MUST
+  include the full OTP formatted as hidden/spoiler text (Telegram spoiler
+  markup) in the high-priority notification. If the recipient client or
+  channel does not support spoiler formatting, the notification MUST fall
+  back to a masked form (last 4 characters) and instruct the user how to
+  retrieve the full code via the web-app. The system MUST document this
+  behavior and provide configuration for per-account preferences if needed.
+
+- **FR-RET-001**: Message persistence MUST be opt-in per-account. By
+  default the system stores only message snippets and metadata; if a user
+  enables message persistence for an account, full message bodies may be
+  stored with a default retention of 30 days. Retention period MUST be
+  configurable per-account and enforced by automated cleanup jobs.
+
 *Example of marking unclear requirements:*
 
 - **FR-006**: System MUST authenticate users via [NEEDS CLARIFICATION: auth method not specified - email/password, SSO, OAuth?]
@@ -150,8 +197,15 @@ Acceptance Scenarios:
 
 ### Key Entities *(include if feature involves data)*
 
-- **[Entity 1]**: [What it represents, key attributes without implementation]
-- **[Entity 2]**: [What it represents, relationships to other entities]
+- **User**: id, Telegram user id, display name, preferences (per-account
+  notification settings), linked mailbox account ids.
+- **MailboxAccount**: provider (Gmail/Yandex/Outlook), account id, display
+  name, encrypted access/refresh tokens, sync status, last sync timestamp.
+- **Message**: provider message id, mailbox account id, sender, recipients,
+  subject, snippet, stored content reference (if persisted), received time,
+  OTP flag (boolean), processing metadata.
+- **Notification**: notification id, message id, user id, priority (high/
+  silent), delivery timestamp, delivery status, recipient chat id.
 
 ## Success Criteria *(mandatory)*
 

@@ -51,6 +51,14 @@ client does not support spoilers, fall back to showing a masked OTP (last 4
 chars) and instruct user to open web-app to view the full code.
 Rationale: Respects convenience while reducing accidental visibility.
 
+### Message Persistence & Retention
+Decision: Persist full message bodies only when a user opts in per-account.
+By default the system stores only snippets and metadata. For persisted
+bodies, use a default retention of 30 days; retention is configurable per
+account. Implement automated cleanup jobs to enforce retention.
+Rationale: Minimizes stored sensitive data by default while allowing users
+who need full message storage the option to enable it.
+
 ## Research Tasks (Phase 0 outputs)
 
 - TASK-R1: Evaluate provider APIs for Gmail, Outlook (MS Graph), Yandex; list

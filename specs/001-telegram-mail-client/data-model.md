@@ -25,6 +25,8 @@
 - sync_status: enum (connected, disconnected, error)
 - last_sync_at: timestamp
 - created_at, updated_at
+- persist_messages: boolean (default: false)  # per-account opt-in for full body storage
+- retention_days: integer (nullable, default: 30)  # retention period for persisted bodies
 
 ### Message
 - id: uuid
