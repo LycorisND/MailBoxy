@@ -23,128 +23,128 @@ web-app. The Telegram bot will handle notifications and quick actions.
 <!--
   ACTION REQUIRED: Replace the content in this section with the technical details
   for the project. The structure here is presented in advisory capacity to guide
-  the iteration process.
--->
+  *** Begin Plan
 
-**Language/Version**: Python 3.11 (backend) + TypeScript/React (frontend) - REASON: fast API iteration and rich web-app UX.
-**Primary Dependencies**: FastAPI (backend), SQLAlchemy or equivalent ORM, alembic (migrations), React + Vite (frontend), a simple task queue (Redis + RQ or Celery), HTTP client libs for provider APIs.
-**Storage**: PostgreSQL for metadata and message indices; optional object storage (S3-compatible) for full message bodies if persisted.
-**Testing**: pytest for backend unit/integration tests; Playwright or Cypress for frontend E2E; contract tests for notification flows.
-**Target Platform**: Linux server (containerized) with HTTPS fronting (mailboxy.app).
-**Project Type**: Web application (backend + frontend + bot service).
-**Performance Goals**: Notification delivery within 30s for 95% messages; backend p95 API latency <200ms under normal load.
-**Constraints**: OAuth providers rate limits; must avoid storing plain credentials; encryption keys kept out of repo.
-**Scale/Scope**: Initial MVP target: hundreds to low thousands of users; design for horizontal scaling for notification workers.
+  ````markdown
+  # Implementation Plan: Telegram Mail Client
 
-## Constitution Check
+  **Branch**: `001-telegram-mail-client` | **Date**: 2025-11-14 | **Spec**: `specs/001-telegram-mail-client/spec.md`
+  **Input**: Feature specification from `specs/001-telegram-mail-client/spec.md`
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
-## Constitution Check
+  ## Summary
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+  MailBoxy: enable users to link multiple mailbox providers via OAuth and
+  receive unified mail in a Telegram-integrated experience. The feature
+  provides: secure OAuth-based account linking, aggregated message listing in
+  the web UI (opened from Telegram web-app), and Telegram notifications with
+  OTP-first policy (full OTP placed in spoiler text with masked fallback).
 
-Constitution gates (quick checklist for plan authors):
+  Initial technical approach: implement a web backend (FastAPI) that manages
+  accounts, message aggregation and notification dispatch. A lightweight
+  frontend (React/Vite SPA) will provide the web-app UI and be embedded in
+  Telegram's web-app. A bot service will handle notifications and quick actions.
 
-- **Privacy & Data Minimization**: Document what user data the feature
-  accesses, stores, and retention periods. Indicate where sensitive data is
-  encrypted at rest.
-- **OAuth & Authentication**: If the feature integrates with external
-  accounts, list required OAuth scopes, token lifecycle, and consent surface.
-- **Notification Policy**: Describe how notifications will follow the
-  project's OTP-first policy (which messages trigger high-priority alerts
-  vs. silent delivery).
-- **Observability**: List required metrics/logs/alerts for feature critical
-  flows (auth, message processing, delivery failures).
+  ## Technical Context
 
-Constitution gates assessment (referencing `spec.md`):
+  **Language/Version**: Python 3.11 (backend) + TypeScript/React (frontend)
+  **Primary Dependencies**: FastAPI, SQLAlchemy, alembic, React + Vite, Redis + RQ/Celery (workers), HTTP client libs for provider APIs.
+  **Storage**: PostgreSQL for metadata and message indices; optional S3-compatible object storage for full message bodies (persisted per-account opt-in).
+  **Testing**: pytest for backend unit/integration; Playwright/Cypress for frontend E2E; contract tests for notification flows.
+  **Target Platform**: Containerized Linux hosts behind HTTPS (production domain `mailboxy.app`).
+  **Performance Goals**: Notification delivery within 30s for 95% deliveries; backend p95 API latency <200ms under expected load.
+  **Constraints**: OAuth provider rate limits and consent surfaces; tokens encrypted at rest using KMS; avoid storing plaintext secrets in repo.
 
-- Privacy & Data Minimization: PASS (spec requires minimal storage; tokens
-  encrypted; retention documented in assumptions).
-- OAuth & Authentication: PASS (spec mandates OAuth linking and re-auth for
-  sensitive actions; plan will request scopes: mail.read-only, userinfo).
-- Notification Policy: PASS (spec requires OTP-first policy and private
-  chat delivery; OTP formatting specified as spoiler with fallback).
-- Observability: PARTIAL — spec requires metrics/logs but plan will define
-  specific metrics (delivery latency, failure rate) in Phase 0 research.
+  ## Constitution Check
 
-This section MUST be completed and linked to relevant spec items before a
-plan can be approved.
+  This plan enforces the constitution gates from `spec.md` and the project's
+  policy. The plan explicitly includes KMS integration, per-account retention
+  opt-in, and OTP-first notification behavior.
 
-## Project Structure
+  Gates (to be validated during Phase 0):
+  - Privacy & Data Minimization: Data stored, scope, and retention are documented and enforced.
+  - OAuth & Authentication: OAuth scopes and redirect URIs registered; re-auth for sensitive actions.
+  - Notification Policy: OTP-first notifications delivered only to user's private chat; spoiler formatting with masked fallback.
+  - Observability: Metrics for delivery latency and failure rates, and alerts for high failure rate.
 
-### Documentation (this feature)
+  ## Implementation Plan (Phase breakdown)
 
-```text
-specs/[###-feature]/
-├── plan.md              # This file (/speckit.plan command output)
-├── research.md          # Phase 0 output (/speckit.plan command)
-├── data-model.md        # Phase 1 output (/speckit.plan command)
-├── quickstart.md        # Phase 1 output (/speckit.plan command)
-├── contracts/           # Phase 1 output (/speckit.plan command)
-└── tasks.md             # Phase 2 output (/speckit.tasks command - NOT created by /speckit.plan)
-```
+  This plan converts the specification into actionable engineering phases,
+  milestones and acceptance gates. Each phase produces artifacts in
+  `specs/001-telegram-mail-client/` and maps to tasks in `tasks.md`.
 
-### Source Code (repository root)
-<!--
-  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
-  for this feature. Delete unused options and expand the chosen structure with
-  real paths (e.g., apps/admin, packages/something). The delivered plan must
-  not include Option labels.
--->
+  Phase 0 — Research & Design (2-4 days)
+  - Deliverables: `research.md`, refined `data-model.md`, minimal OpenAPI contract and updated `spec.md` success criteria.
+  - Actions:
+    - Finalize OAuth scopes and provider-specific consent flows (T012, T019-T021).
+    - Design encryption key lifecycle and select KMS provider (T051).
+    - Define message persistence semantics and retention defaults (T049/T050).
+    - Define metrics and alerts for observability (delivery latency, failure rate) (T017/T034).
 
-```text
-# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
-src/
-├── models/
-├── services/
-├── cli/
-└── lib/
+  Phase 1 — Foundation & Scaffolding (3-5 days)
+  - Deliverables: runnable backend/frontend/bot scaffold, DB migrations, CI workflows.
+  - Actions:
+    - Create project layout and dependency manifests (T001-T007).
+    - Implement models and migrations for `User`, `MailboxAccount`, `Message`, `Notification` (T009, T013, T014).
+    - Implement token encryption helper configured to fetch keys from KMS (T010, T051).
+    - Setup basic observability (structured logs + metrics) and test harness (T017, T018).
+    - Provision staging domain/tunnel and document OAuth redirect setup (T052, T054).
 
-tests/
-├── contract/
-├── integration/
-└── unit/
+  Phase 2 — Core MVP (OAuth + Notifications) (5-10 days)
+  - Deliverables: OAuth linking flow, message ingestion, OTP detection, Telegram notification dispatch.
+  - Actions:
+    - Implement OAuth start/callback endpoints and provider registry (T019-T022, T012).
+    - Implement message ingestion pipeline: webhooks and/or pollers with backoff (T027).
+    - Implement OTP detection heuristics and notification formatter with spoiler fallback (T028, T029).
+    - Implement notification dispatcher + worker with retry/backoff and metrics (T030, T031, T034).
+    - Add contract and integration tests for notification behavior (T032, T033).
 
-# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
-backend/
-├── src/
-│   ├── models/
-│   ├── services/
-│   └── api/
-└── tests/
+  Phase 3 — Aggregation + UI (3-7 days)
+  - Deliverables: Aggregated mail list API and Telegram web-app SPA.
+  - Actions:
+    - Persist message metadata and implement `GET /api/v1/messages` with pagination and filtering (T035, T036).
+    - Implement frontend mail list and account management pages (T025, T037, T040).
+    - Implement session handling with re-auth gate for sensitive operations (T042, T043).
 
-frontend/
-├── src/
-│   ├── components/
-│   ├── pages/
-│   └── services/
-└── tests/
+  Phase 4 — Hardening & Release (2-4 days)
+  - Deliverables: Security review, performance tests, deployment manifests, retention enforcement job.
+  - Actions:
+    - Add CI secret scanning and pre-merge checks (T053).
+    - Implement retention enforcement worker to delete expired persisted bodies (T050).
+    - Security review and dependency audit (T045).
+    - Prepare k8s/Terraform manifests and run smoke tests (T048).
 
-# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
-api/
-└── [same as backend above]
+  Phase 5 — Post-launch Observability & Iteration (ongoing)
+  - Deliverables: Dashboards, alerts, UX improvements.
+  - Actions:
+    - Monitor notification latency and error rates; tune retries/concurrency.
+    - Improve OTP heuristics from real-world corpus and add opt-out controls.
 
-ios/ or android/
-└── [platform-specific structure: feature modules, UI flows, platform tests]
-```
+  ## Acceptance Gates & Mapping
+  - Gate A (Safety): KMS integration (T051) implemented and secrets not stored in plaintext.
+  - Gate B (Functionality): OAuth linking and notification delivery tests pass (T019-T021, T031, T032).
+  - Gate C (Privacy): Retention enforcement implemented and opt-in defaults applied (T049, T050).
+  - Gate D (Observability): Metrics and alerts for delivery latency and failure rate in place (T017, T034).
 
-**Structure Decision**: Web application with three services:
+  Each gate must be satisfied before the Feature is considered releasable. Tests for each gate must be automated and included in CI where practical.
 
-- `backend/` - FastAPI service: API endpoints, background workers, OAuth
-  integration, notification dispatcher.
-- `frontend/` - React SPA (Vite): web-app UI embedded in Telegram web-app.
-- `bot/` - Telegram bot service (can live within backend as a subservice or
-  a lightweight process) responsible for sending notifications and handling
-  quick actions.
+  ## Estimates & Teaming
+  - Rough estimate (MVP): 3-4 engineer-weeks (one engineer full-time), split as:
+    - Research & foundation: 1 week
+    - Core MVP (OAuth+Notifications): 1.5 weeks
+    - Aggregation + UI: 0.5-1 week
+    - Hardening & release: 0.5 week
 
-Tests grouped by service under `tests/` with `unit/`, `integration/`, and
-`e2e/` for cross-service flows.
+  ## Risks & Mitigations
+  - OAuth provider rate limits & consent UI changes — Mitigation: use provider-specific backoff and test accounts; keep scopes minimal.
+  - Storing full message bodies — Mitigation: make message body persistence opt-in per account and enforce retention via scheduled job (T049/T050).
+  - Secrets management — Mitigation: integrate KMS early and add CI scanning (T051, T053).
 
-## Complexity Tracking
+  ## Next Steps (immediate)
+  1. Review this plan and confirm estimates & priority.
+  2. Run Phase 0 research tasks (update `research.md`), then start Phase 1 scaffolding (T001..T017).
+  3. After Phase 1, re-run constitution check and open a draft PR for the spec + plan.
 
-> **Fill ONLY if Constitution Check has violations that must be justified**
+  *** End Plan
 
-| Violation | Why Needed | Simpler Alternative Rejected Because |
-|-----------|------------|-------------------------------------|
-| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
+  ``` 
 | [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
