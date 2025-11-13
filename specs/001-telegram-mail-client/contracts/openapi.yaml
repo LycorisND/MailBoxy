@@ -1,0 +1,89 @@
+openapi: 3.0.3
+info:
+  title: MailBoxy API
+  version: 0.1.0
+servers:
+  - url: https://api.mailboxy.app
+paths:
+  /api/v1/accounts:
+    post:
+      summary: Link a mailbox account (initiate OAuth)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                provider:
+                  type: string
+                  example: gmail
+      responses:
+        '302':
+          description: Redirect to provider consent URL (or provide URL in body)
+  /api/v1/accounts/{accountId}:
+    delete:
+      summary: Remove a linked mailbox account
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Account removed
+  /api/v1/messages:
+    get:
+      summary: List aggregated messages across linked accounts
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: A paginated list of messages
+  /api/v1/messages/{messageId}:
+    get:
+      summary: Get message metadata or body (sensitive operations require auth)
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Message details
+  /api/v1/notifications:
+    post:
+      summary: Webhook for processed incoming mail to trigger notifications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message_id:
+                  type: string
+                user_id:
+                  type: string
+                priority:
+                  type: string
+      responses:
+        '202':
+          description: Notification queued
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
