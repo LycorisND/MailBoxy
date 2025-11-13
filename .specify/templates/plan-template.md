@@ -30,8 +30,25 @@
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+## Constitution Check
 
-[Gates determined based on constitution file]
+*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+
+Constitution gates (quick checklist for plan authors):
+
+- **Privacy & Data Minimization**: Document what user data the feature
+  accesses, stores, and retention periods. Indicate where sensitive data is
+  encrypted at rest.
+- **OAuth & Authentication**: If the feature integrates with external
+  accounts, list required OAuth scopes, token lifecycle, and consent surface.
+- **Notification Policy**: Describe how notifications will follow the
+  project's OTP-first policy (which messages trigger high-priority alerts
+  vs. silent delivery).
+- **Observability**: List required metrics/logs/alerts for feature critical
+  flows (auth, message processing, delivery failures).
+
+This section MUST be completed and linked to relevant spec items before a
+plan can be approved.
 
 ## Project Structure
 

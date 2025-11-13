@@ -90,6 +90,15 @@
 - **FR-004**: System MUST [data requirement, e.g., "persist user preferences"]
 - **FR-005**: System MUST [behavior, e.g., "log all security events"]
 
+<!-- Constitution-mandated functional requirements examples -->
+- **FR-AUTH-001**: System MUST integrate mailbox providers via OAuth or
+  equivalent secure delegation flows; credentials MUST NOT be stored.
+- **FR-NOTIFY-001**: Notification delivery MUST implement OTP-first policy:
+  OTP-containing messages MUST trigger high-priority alerts; other mail
+  notifications MUST be silent by default.
+- **FR-DOMAIN-001**: Web UI and OAuth redirect URIs MUST use the official
+  domain `mailboxy.app` unless an explicit exception is approved.
+
 *Example of marking unclear requirements:*
 
 - **FR-006**: System MUST authenticate users via [NEEDS CLARIFICATION: auth method not specified - email/password, SSO, OAuth?]
